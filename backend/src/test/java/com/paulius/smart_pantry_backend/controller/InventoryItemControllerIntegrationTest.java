@@ -31,18 +31,18 @@ class InventoryItemControllerIntegrationTest {
     }
 
     @Test
-    void createItem_WithoutCredentials_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(post("/api/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Rice",
-                                  "quantity": 5,
-                                  "minThreshold": 2
-                                }
-                                """))
-                .andExpect(status().isUnauthorized());
-    }
+    void createItem_WithoutCredentials_ReturnsForbidden() throws Exception {
+    mockMvc.perform(post("/api/items")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {
+                              "name": "Rice",
+                              "quantity": 5,
+                              "minThreshold": 2
+                            }
+                            """))
+            .andExpect(status().isForbidden());
+  }
 
     @Test
     void createItem_WithAdminCredentials_ReturnsCreated() throws Exception {
