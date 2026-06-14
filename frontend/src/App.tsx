@@ -11,9 +11,10 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { getItems } from "./api/itemsApi";
+import { getItems, restockItem } from "./api/itemsApi";
 import { InventoryTable } from "./components/InventoryTable";
 import { LoginForm } from "./components/LoginForm";
+import { RestockDialog } from "./components/RestockDialog";
 import type { Credentials } from "./api/itemsApi";
 import type { InventoryItem } from "./types/inventory";
 
@@ -22,6 +23,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   const isAdmin = credentials?.username === "admin";
 
@@ -35,6 +37,26 @@ function App() {
 
   function handleLogout() {
     setCredentials(null);
+    setSelectedItem(null);
+  }
+
+  async function handleRestock(restockQuantity: number) {
+    if (!credentials || !selectedItem) {
+      return;
+    }
+
+    const updatedItem = await restockItem(
+      selectedItem.id,
+      { quantity: restockQuantity },
+      credentials,
+    );
+
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === updatedItem.id ? updatedItem : item,
+      ),
+    );
+    setSelectedItem(null);
   }
 
   useEffect(() => {
@@ -120,9 +142,21 @@ function App() {
         )}
 
         {!loading && !error && items.length > 0 && (
-          <InventoryTable items={items} />
+          <InventoryTable
+            items={items}
+            isAdmin={isAdmin}
+            onRestock={setSelectedItem}
+          />
         )}
       </Container>
+
+      <RestockDialog
+        key={selectedItem?.id ?? "closed"}
+        item={selectedItem}
+        open={selectedItem !== null}
+        onClose={() => setSelectedItem(null)}
+        onRestock={handleRestock}
+      />
     </Box>
   );
 }

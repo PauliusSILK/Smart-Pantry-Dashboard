@@ -1,4 +1,5 @@
 import {
+  Button,
   Chip,
   Paper,
   Table,
@@ -13,9 +14,15 @@ import type { InventoryItem } from "../types/inventory";
 
 type InventoryTableProps = {
   items: InventoryItem[];
+  isAdmin: boolean;
+  onRestock: (item: InventoryItem) => void;
 };
 
-export function InventoryTable({ items }: InventoryTableProps) {
+export function InventoryTable({
+  items,
+  isAdmin,
+  onRestock,
+}: InventoryTableProps) {
   return (
     <TableContainer component={Paper}>
       <Table aria-label="Inventory items">
@@ -25,6 +32,7 @@ export function InventoryTable({ items }: InventoryTableProps) {
             <TableCell align="right">Quantity</TableCell>
             <TableCell align="right">Minimum threshold</TableCell>
             <TableCell>Status</TableCell>
+            {isAdmin && <TableCell align="right">Actions</TableCell>}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -55,6 +63,17 @@ export function InventoryTable({ items }: InventoryTableProps) {
                   variant={item.isLowStock ? "filled" : "outlined"}
                 />
               </TableCell>
+              {isAdmin && (
+                <TableCell align="right">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => onRestock(item)}
+                  >
+                    Restock
+                  </Button>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
