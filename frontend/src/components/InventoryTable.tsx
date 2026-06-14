@@ -1,6 +1,7 @@
 import {
   Button,
   Chip,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -8,7 +9,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { alpha } from "@mui/material/styles";
 import type { InventoryItem } from "../types/inventory";
 
@@ -16,12 +19,14 @@ type InventoryTableProps = {
   items: InventoryItem[];
   isAdmin: boolean;
   onRestock: (item: InventoryItem) => void;
+  onDelete: (item: InventoryItem) => void;
 };
 
 export function InventoryTable({
   items,
   isAdmin,
   onRestock,
+  onDelete,
 }: InventoryTableProps) {
   return (
     <TableContainer component={Paper}>
@@ -69,9 +74,20 @@ export function InventoryTable({
                     variant="outlined"
                     size="small"
                     onClick={() => onRestock(item)}
+                    sx={{ mr: 1 }}
                   >
                     Restock
                   </Button>
+                  <Tooltip title={`Delete ${item.name}`}>
+                    <IconButton
+                      aria-label={`Delete ${item.name}`}
+                      color="error"
+                      size="small"
+                      onClick={() => onDelete(item)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               )}
             </TableRow>

@@ -10,6 +10,16 @@ export type Credentials = {
   password: string;
 };
 
+export class ApiRequestError extends Error {
+  validationErrors?: Record<string, string>;
+
+  constructor(message: string, validationErrors?: Record<string, string>) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.validationErrors = validationErrors;
+  }
+}
+
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
 ).replace(/\/$/, "");
@@ -43,7 +53,15 @@ function isApiError(value: unknown): value is ApiError {
     typeof value.timestamp === "string" &&
     typeof value.status === "number" &&
     typeof value.error === "string" &&
-    typeof value.message === "string"
+    typeof value.message === "string" &&
+    (value.validationErrors === undefined || isStringRecord(value.validationErrors))
+  );
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return (
+    isRecord(value) &&
+    Object.values(value).every((item) => typeof item === "string")
   );
 }
 
@@ -59,7 +77,10 @@ async function throwApiError(response: Response): Promise<never> {
   const body = await readJson(response);
 
   if (isApiError(body)) {
-    throw new Error(`${body.error}: ${body.message}`);
+    throw new ApiRequestError(
+      `${body.error}: ${body.message}`,
+      body.validationErrors,
+    );
   }
 
   throw new Error(`Request failed with status ${response.status}`);

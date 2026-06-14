@@ -11,7 +11,9 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { getItems, restockItem } from "./api/itemsApi";
+import { createItem, deleteItem, getItems, restockItem } from "./api/itemsApi";
+import { CreateItemDialog } from "./components/CreateItemDialog";
+import { DeleteItemDialog } from "./components/DeleteItemDialog";
 import { InventoryTable } from "./components/InventoryTable";
 import { LoginForm } from "./components/LoginForm";
 import { RestockDialog } from "./components/RestockDialog";
@@ -24,6 +26,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const isAdmin = credentials?.username === "admin";
 
@@ -38,6 +42,26 @@ function App() {
   function handleLogout() {
     setCredentials(null);
     setSelectedItem(null);
+    setItemToDelete(null);
+    setCreateOpen(false);
+  }
+
+  async function handleCreateItem(
+    name: string,
+    quantity: number,
+    minThreshold: number,
+  ) {
+    if (!credentials) {
+      return;
+    }
+
+    const createdItem = await createItem(
+      { name, quantity, minThreshold },
+      credentials,
+    );
+
+    setItems((currentItems) => [...currentItems, createdItem]);
+    setCreateOpen(false);
   }
 
   async function handleRestock(restockQuantity: number) {
@@ -57,6 +81,21 @@ function App() {
       ),
     );
     setSelectedItem(null);
+  }
+
+  async function handleDelete() {
+    if (!credentials || !itemToDelete) {
+      return;
+    }
+
+    const deletedItemId = itemToDelete.id;
+
+    await deleteItem(deletedItemId, credentials);
+
+    setItems((currentItems) =>
+      currentItems.filter((item) => item.id !== deletedItemId),
+    );
+    setItemToDelete(null);
   }
 
   useEffect(() => {
@@ -129,6 +168,14 @@ function App() {
           </Box>
         )}
 
+        {isAdmin && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+            <Button variant="contained" onClick={() => setCreateOpen(true)}>
+              Add item
+            </Button>
+          </Box>
+        )}
+
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <CircularProgress aria-label="Loading inventory" />
@@ -146,6 +193,7 @@ function App() {
             items={items}
             isAdmin={isAdmin}
             onRestock={setSelectedItem}
+            onDelete={setItemToDelete}
           />
         )}
       </Container>
@@ -157,6 +205,20 @@ function App() {
         onClose={() => setSelectedItem(null)}
         onRestock={handleRestock}
       />
+      <DeleteItemDialog
+        key={itemToDelete?.id ?? "closed"}
+        item={itemToDelete}
+        open={itemToDelete !== null}
+        onClose={() => setItemToDelete(null)}
+        onDelete={handleDelete}
+      />
+      {createOpen && (
+        <CreateItemDialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onCreate={handleCreateItem}
+        />
+      )}
     </Box>
   );
 }
