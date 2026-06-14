@@ -3,22 +3,38 @@ import {
   Alert,
   AppBar,
   Box,
+  Button,
+  Chip,
   CircularProgress,
   Container,
+  Stack,
   Toolbar,
   Typography,
 } from "@mui/material";
 import { getItems } from "./api/itemsApi";
 import { InventoryTable } from "./components/InventoryTable";
+import { LoginForm } from "./components/LoginForm";
+import type { Credentials } from "./api/itemsApi";
 import type { InventoryItem } from "./types/inventory";
 
 function App() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<Credentials | null>(null);
+
+  const isAdmin = credentials?.username === "admin";
 
   function loadItems() {
     return getItems();
+  }
+
+  function handleLogin(nextCredentials: Credentials) {
+    setCredentials(nextCredentials);
+  }
+
+  function handleLogout() {
+    setCredentials(null);
   }
 
   useEffect(() => {
@@ -55,9 +71,19 @@ function App() {
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" component="div">
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Smart Pantry
           </Typography>
+
+          {credentials && (
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <Typography variant="body2">{credentials.username}</Typography>
+              {isAdmin && <Chip label="Admin" color="secondary" size="small" />}
+              <Button color="inherit" size="small" onClick={handleLogout}>
+                Logout
+              </Button>
+            </Stack>
+          )}
         </Toolbar>
       </AppBar>
 
@@ -74,6 +100,12 @@ function App() {
             Review current stock levels and spot items that need attention.
           </Typography>
         </Box>
+
+        {!credentials && (
+          <Box sx={{ mb: 4 }}>
+            <LoginForm onLogin={handleLogin} />
+          </Box>
+        )}
 
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
